@@ -12,6 +12,14 @@ defmodule BasketTest do
     "PZ1" => 11.23,
   }
 
+  pricing_rules = %{"BR1" => 5.00, "MC1" => 3.11, "PZ1" => 11.23}
+
+  test "add one item" do
+    {:ok, pid} = Basket.new(@basket_data)
+    Basket.add(pid, "MC1")
+    assert(Basket.total(pid) == 3.11)
+  end
+
   test "adds items together" do
     {:ok, pid} = Basket.new(@basket_data)
     Basket.add("MC1")
