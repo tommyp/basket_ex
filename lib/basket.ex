@@ -1,18 +1,10 @@
+require IEx
+
 defmodule Basket do
   use GenServer
 
   @moduledoc """
   Documentation for Basket.
-  """
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Basket.hello
-      :world
-
   """
   def new(pricing_rules) do
     GenServer.start_link(__MODULE__, pricing_rules)
@@ -28,24 +20,30 @@ defmodule Basket do
 
   # API
 
-  # def handle_cast({:set_pricing_rules, pricing_rules}, state) do
-  #   state = Map.put(state, pricing_rules)
-
-  #   {:noreply, state}
-  # end
-
   def init(state) do
-    state = Map.put(%{total: 0}, :pricing_rules, state)
+    init_state = %{
+      total: 0,
+      items: []
+    }
+
+    state = Map.put(init_state, :pricing_rules, state)
 
     {:ok, state}
   end
 
   def handle_cast({:add, item_code}, state) do
-    total = Map.get(state, :total)
+    unit = Map.get(state[:pricing_rules], item_code)
 
-    unit_cost = Map.get(state[:pricing_rules], item_code)
+    {_, state} = Map.get_and_update!(state, :items, fn(current_items) ->
+      {current_items, [item_code | current_items]}
+    end)
 
-    state = Map.put(state, :total, total + unit_cost)
+    {_, state} = state
+                |> Map.get_and_update(:total, fn(total) ->
+                  {total, total + unit[:price]}
+                end)
+
+    state = apply_offer(state, unit)
 
     {:noreply, state}
   end
@@ -54,5 +52,21 @@ defmodule Basket do
     total = Map.get(state, :total)
 
     {:reply, total, state}
+  end
+
+  def apply_offer(state, unit, :bogof) do
+    items = Map.get(state, :items)
+
+    count = Enum.count(items, fn(item) -> item == Map.keys(unit)[0] end)
+
+    state = Map.get_and_update(state, :total, fn(total) ->
+      total = total - (unit[:price] / count)
+    end)
+
+    state
+  end
+
+  def apply_offer(state, _) do
+    state
   end
 end
