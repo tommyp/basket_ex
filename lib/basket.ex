@@ -15,58 +15,77 @@ defmodule Basket do
   end
 
   def total(pid) do
-    GenServer.call(pid, :total)
+    GenServer.call(pid, :total, :infinity)
   end
 
   # API
 
   def init(state) do
     init_state = %{
-      total: 0,
-      items: []
+      subtotal: 0,
     }
 
-    state = Map.put(init_state, :pricing_rules, state)
+    state = Map.put(init_state, :items, state)
 
     {:ok, state}
   end
 
   def handle_cast({:add, item_code}, state) do
-    unit = Map.get(state[:pricing_rules], item_code)
+    item = Map.get(state[:items], item_code)
 
-    {_, state} = Map.get_and_update!(state, :items, fn(current_items) ->
-      {current_items, [item_code | current_items]}
-    end)
+    item =
+      if quantity = Map.get(item, :quantity) do
+        Map.put(item, :quantity, quantity + 1)
+      else
+        Map.put(item, :quantity, 1)
+      end
+
+    items = Map.put(state[:items], item_code, item)
+
+    state = Map.put(state, :items, items)
 
     {_, state} = state
-                |> Map.get_and_update(:total, fn(total) ->
-                  {total, total + unit[:price]}
+                |> Map.get_and_update(:subtotal, fn(subtotal) ->
+                  {subtotal, subtotal + item[:price]}
                 end)
-
-    state = apply_offer(state, unit)
 
     {:noreply, state}
   end
 
   def handle_call(:total, _from, state) do
-    total = Map.get(state, :total)
+    total = calculate_item_prices(state)
 
     {:reply, total, state}
   end
 
-  def apply_offer(state, unit, :bogof) do
-    items = Map.get(state, :items)
+  def calculate_item_prices(state) do
+    state[:items]
+    |> Enum.filter(fn({code, item}) -> Map.has_key?(item, :quantity) end)
+    |> Enum.map(fn({code, item}) ->
+      if offer = Map.get(item, :offer) do
+        total = apply_offer(item, offer)
+      else
+        total = item[:quantity] * item[:price]
+      end
 
-    count = Enum.count(items, fn(item) -> item == Map.keys(unit)[0] end)
-
-    state = Map.get_and_update(state, :total, fn(total) ->
-      total = total - (unit[:price] / count)
+      total
     end)
-
-    state
+    |> Enum.sum
   end
 
-  def apply_offer(state, _) do
-    state
+  def apply_offer(item, :bogof) do
+    if item[:quantity] >= 2 do
+      if rem(item[:quantity], 2) == 0 do
+        (item[:quantity] / 2) * item[:price]
+      else
+        ((item[:quantity] - 1)/ 2) * item[:price]
+      end
+    else
+      item[:price]
+    end
+  end
+
+  def apply_offer(item, _) do
+    item[:price]
   end
 end

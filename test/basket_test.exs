@@ -5,7 +5,6 @@ defmodule BasketTest do
   @basket_data %{
     "BR1" => %{
       price: 5.00, # 3 or more is 4.50 each,
-      offer: nil,
     },
     "MC1" => %{
       price: 3.11,
@@ -13,7 +12,6 @@ defmodule BasketTest do
     },
     "PZ1" => %{
       price: 11.23,
-      offer: nil,
     }
   }
 
@@ -29,8 +27,7 @@ defmodule BasketTest do
     Basket.add(pid, "BR1")
     Basket.add(pid, "MC1")
     Basket.add(pid, "PZ1")
-    actual = Basket.total(pid)
 
-    assert(actual == 19.34)
+    assert(Basket.total(pid) == 19.34)
   end
 end
