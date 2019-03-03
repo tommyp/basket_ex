@@ -85,6 +85,14 @@ defmodule Basket do
     end
   end
 
+  def apply_offer(item, :discount) do
+    if item[:quantity] >= 3 do
+      item[:quantity] * (item[:price] - 0.5)
+    else
+      item[:quantity] * item[:price]
+    end
+  end
+
   def apply_offer(item, _) do
     item[:price]
   end

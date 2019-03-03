@@ -21,7 +21,14 @@ defmodule BasketTest do
     assert(Basket.total(pid) == 3.11)
   end
 
-  test "adds items together" do
+  test "bogof" do
+    {:ok, pid} = Basket.new(@basket_data)
+    Basket.add(pid, "MC1")
+    Basket.add(pid, "MC1")
+    assert(Basket.total(pid) == 3.11)
+  end
+
+  test "bogof with other items" do
     {:ok, pid} = Basket.new(@basket_data)
     Basket.add(pid, "MC1")
     Basket.add(pid, "BR1")
@@ -29,5 +36,15 @@ defmodule BasketTest do
     Basket.add(pid, "PZ1")
 
     assert(Basket.total(pid) == 19.34)
+  end
+
+  test "discount" do
+    {:ok, pid} = Basket.new(@basket_data)
+    Basket.add(pid, "BR1")
+    Basket.add(pid, "BR1")
+    Basket.add(pid, "MC1")
+    Basket.add(pid, "BR1")
+
+    assert(Basket.total(pid) == 16.61)
   end
 end
