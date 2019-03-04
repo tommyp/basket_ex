@@ -5,6 +5,7 @@ defmodule BasketTest do
   @basket_data %{
     "BR1" => %{
       price: 5.00, # 3 or more is 4.50 each,
+      offer: :discount,
     },
     "MC1" => %{
       price: 3.11,

@@ -75,10 +75,9 @@ defmodule Basket do
 
   def apply_offer(item, :bogof) do
     if item[:quantity] >= 2 do
-      if rem(item[:quantity], 2) == 0 do
-        (item[:quantity] / 2) * item[:price]
-      else
-        ((item[:quantity] - 1)/ 2) * item[:price]
+      case rem(item[:quantity], 2) do
+        0 -> (item[:quantity] / 2) * item[:price]
+        _ -> ((item[:quantity] - 1)/ 2) * item[:price]
       end
     else
       item[:price]
